@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "280862734188",
+    "firebase_url": "https://fancychat-aa4e9.firebaseio.com",
+    "project_id": "fancychat-aa4e9",
+    "storage_bucket": "fancychat-aa4e9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:280862734188:android:22fbe14f5775cf73a3a549",
+        "android_client_info": {
+          "package_name": "com.waytosuccess.fancychat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "280862734188-ns6pfh8ou43rr01o7vvg1qhvbp7n91p5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.waytosuccess.fancychat",
+            "certificate_hash": "820bb407e4c9ae9109c6147bc85e4b169e038be7"
+          }
+        },
+        {
+          "client_id": "280862734188-58e6a0fat9a63ivnknrfeh0k7duk2746.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCISPrWuf-lmmL8vwyX2r3GtHe7W8tugB4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "280862734188-58e6a0fat9a63ivnknrfeh0k7duk2746.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
