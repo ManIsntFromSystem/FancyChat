@@ -35,6 +35,7 @@
         <ImageButton
             android:background="@drawable/ic_attach_file_black_50dp"
             android:id="@+id/btnSendImg"
+            android:onClick="sendImg"
             android:layout_width="40dp"
             android:layout_height="40dp"/>
 

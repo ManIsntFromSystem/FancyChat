@@ -4,11 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,18 +20,19 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int GET_IMAGE_LOCAL_STORAGE = 113;
     private ListView messagingListView;
     private FancyMessageAdapter fancyMessageAdapter;
     private Button btnSendMsg;
@@ -37,9 +42,12 @@ public class MainActivity extends AppCompatActivity {
 
     private String userName;
 
-    FirebaseDatabase database;
-    DatabaseReference messagesDatabaseReference;
-    ChildEventListener messagesChildEventListener;
+    private FirebaseDatabase database;
+    private DatabaseReference messagesDatabaseReference;
+    private ChildEventListener messagesChildEventListener;
+
+    private DatabaseReference usersDatabaseReference;
+    private ChildEventListener usersChildEventListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +56,14 @@ public class MainActivity extends AppCompatActivity {
 
         database = FirebaseDatabase.getInstance();
         messagesDatabaseReference = database.getReference().child("messages");
+        usersDatabaseReference = database.getReference().child("users");
 
-        userName = "Default User";
-
+        Intent intent  = getIntent();
+        if(intent != null){
+            userName = intent.getStringExtra("user_name");
+        } else {
+            userName = "Default User";
+        }
         List<FancyMessage> listMessages = new ArrayList<>();
         fancyMessageAdapter = new FancyMessageAdapter(this,
                 R.layout.message_item, listMessages);
@@ -118,8 +131,39 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
-
         messagesDatabaseReference.addChildEventListener(messagesChildEventListener);
+
+        usersChildEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                User user = dataSnapshot.getValue(User.class);
+
+                if (user.getId().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())){
+                    userName = user.getName();
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
+        usersDatabaseReference.addChildEventListener(usersChildEventListener);
     }
 
     public void btnSendMsg(View view) {
@@ -132,5 +176,34 @@ public class MainActivity extends AppCompatActivity {
         messagesDatabaseReference.push().setValue(fancyMessage);
 
         editMsg.setText("");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.sign_out:
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(MainActivity.this, SignInActivity.class));
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void sendImg(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/jpeg");
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+        startActivityForResult(Intent.createChooser(intent,
+                "Choose an image"), GET_IMAGE_LOCAL_STORAGE);
     }
 }
