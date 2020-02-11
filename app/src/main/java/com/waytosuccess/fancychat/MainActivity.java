@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -19,13 +20,20 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +41,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int GET_IMAGE_LOCAL_STORAGE = 113;
+
     private ListView messagingListView;
     private FancyMessageAdapter fancyMessageAdapter;
     private Button btnSendMsg;
@@ -49,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference usersDatabaseReference;
     private ChildEventListener usersChildEventListener;
 
+    private FirebaseStorage firebaseStorage;
+    private StorageReference chatImagesStorageReference;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,6 +69,10 @@ public class MainActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         messagesDatabaseReference = database.getReference().child("messages");
         usersDatabaseReference = database.getReference().child("users");
+
+        firebaseStorage = FirebaseStorage.getInstance();
+        chatImagesStorageReference = firebaseStorage.getReference().child("chat_images");
+
 
         Intent intent  = getIntent();
         if(intent != null){
@@ -201,9 +217,49 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendImg(View view) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/jpeg");
+        intent.setType("image/*");
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         startActivityForResult(Intent.createChooser(intent,
                 "Choose an image"), GET_IMAGE_LOCAL_STORAGE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == GET_IMAGE_LOCAL_STORAGE && resultCode == RESULT_OK){
+            Uri selectedImageUri = data.getData();
+
+            final StorageReference imageReference = chatImagesStorageReference
+                    .child(selectedImageUri.getLastPathSegment());
+
+            UploadTask uploadTask = imageReference.putFile(selectedImageUri);
+
+            Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                @Override
+                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+
+                    // Continue with the task to get the download URL
+                    return imageReference.getDownloadUrl();
+                }
+            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                @Override
+                public void onComplete(@NonNull Task<Uri> task) {
+                    if (task.isSuccessful()) {
+                        Uri downloadUri = task.getResult();
+                        FancyMessage message = new FancyMessage();
+                        message.setImageURL(downloadUri.toString());
+                        message.setName(userName);
+                        messagesDatabaseReference.push().setValue(message);
+                        Toast.makeText(MainActivity.this, "File is successful", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // Handle failures
+                        // ...
+                    }
+                }
+            });
+        }
     }
 }

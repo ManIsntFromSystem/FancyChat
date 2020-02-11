@@ -42,6 +42,8 @@ public class SignInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
+        mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
         usersDatabaseReference = database.getReference().child("users");
 
         emailEditText = findViewById(R.id.emailEditText);
@@ -50,8 +52,6 @@ public class SignInActivity extends AppCompatActivity {
         nameEditText = findViewById(R.id.nameEditText);
         loginSignUpBtn = findViewById(R.id.loginSignUpBtn);
         toggleLoginSignUpTextView = findViewById(R.id.toggleLoginSignUpTextView);
-
-        mAuth = FirebaseAuth.getInstance();
 
         loginSignUpBtn.setOnClickListener(new View.OnClickListener() {
             @Override
