@@ -50,7 +50,11 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton btnSendImg;
 
     private String userName;
+    private String idRecipientUser;
+    private String nameRecipientUser;
     private List<FancyMessage> listMessages;
+
+    private FirebaseAuth mAuth;
 
     private FirebaseDatabase database;
     private DatabaseReference messagesDatabaseReference;
@@ -67,6 +71,19 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        mAuth = FirebaseAuth.getInstance();
+
+        Intent intent = getIntent();
+        if(intent != null){
+            idRecipientUser = intent.getStringExtra("idRecipientUser");
+            nameRecipientUser = intent.getStringExtra("nameRecipientUser");
+            userName = intent.getStringExtra("user_name");
+        } else {
+            userName = "Default User";
+        }
+
+        setTitle("Chat with " + nameRecipientUser);
+
         database = FirebaseDatabase.getInstance();
         messagesDatabaseReference = database.getReference().child("messages");
         usersDatabaseReference = database.getReference().child("users");
@@ -74,13 +91,6 @@ public class ChatActivity extends AppCompatActivity {
         firebaseStorage = FirebaseStorage.getInstance();
         chatImagesStorageReference = firebaseStorage.getReference().child("chat_images");
 
-
-        Intent intent  = getIntent();
-        if(intent != null){
-            userName = intent.getStringExtra("user_name");
-        } else {
-            userName = "Default User";
-        }
 
         listMessages = new ArrayList<>();
         fancyMessageAdapter = new FancyMessageAdapter(this,
@@ -127,7 +137,19 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 FancyMessage message = dataSnapshot.getValue(FancyMessage.class);
-                fancyMessageAdapter.add(message);
+
+                Log.d("MessageData", "Message: " + message);
+                Log.d("MessageData", "Sender: " + message.getSender());
+                Log.d("MessageData", "Recipient: " + idRecipientUser);
+                if(message.getSender().equals(mAuth.getCurrentUser().getUid()) &&
+                    message.getRecipient().equals(idRecipientUser)){
+                    message.setMine(true);
+                    fancyMessageAdapter.add(message);
+                } if(message.getRecipient().equals(mAuth.getCurrentUser().getUid()) &&
+                        message.getSender().equals(idRecipientUser)){
+                    message.setMine(false);
+                    fancyMessageAdapter.add(message);
+                }
             }
 
             @Override
@@ -190,6 +212,8 @@ public class ChatActivity extends AppCompatActivity {
         FancyMessage fancyMessage = new FancyMessage();
         fancyMessage.setText(editMsg.getText().toString());
         fancyMessage.setName(userName);
+        fancyMessage.setSender(mAuth.getCurrentUser().getUid());
+        fancyMessage.setRecipient(idRecipientUser);
         fancyMessage.setImageURL(null);
 
         messagesDatabaseReference.push().setValue(fancyMessage);
@@ -255,6 +279,8 @@ public class ChatActivity extends AppCompatActivity {
                         FancyMessage message = new FancyMessage();
                         message.setImageURL(downloadUri.toString());
                         message.setName(userName);
+                        message.setSender(mAuth.getCurrentUser().getUid());
+                        message.setRecipient(idRecipientUser);
                         messagesDatabaseReference.push().setValue(message);
                         Toast.makeText(ChatActivity.this, "File is successful", Toast.LENGTH_SHORT).show();
                     } else {
