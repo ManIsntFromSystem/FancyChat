@@ -38,7 +38,7 @@ import com.google.firebase.storage.UploadTask;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity {
 
     private static final int GET_IMAGE_LOCAL_STORAGE = 113;
 
@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnSendImg;
 
     private String userName;
+    private List<FancyMessage> listMessages;
 
     private FirebaseDatabase database;
     private DatabaseReference messagesDatabaseReference;
@@ -64,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_chat);
 
         database = FirebaseDatabase.getInstance();
         messagesDatabaseReference = database.getReference().child("messages");
@@ -80,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             userName = "Default User";
         }
-        List<FancyMessage> listMessages = new ArrayList<>();
+
+        listMessages = new ArrayList<>();
         fancyMessageAdapter = new FancyMessageAdapter(this,
                 R.layout.message_item, listMessages);
         try {
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (NullPointerException nlpe){
            Log.d("AdapterMyErr", "Adapter: " + fancyMessageAdapter.toString());
         }
+
         btnSendMsg = findViewById(R.id.btnSendMsg);
         btnSendImg = findViewById(R.id.btnSendImg);
         progressBar = findViewById(R.id.progressBar);
@@ -208,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.sign_out:
                 FirebaseAuth.getInstance().signOut();
-                startActivity(new Intent(MainActivity.this, SignInActivity.class));
+                startActivity(new Intent(ChatActivity.this, SignInActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -253,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
                         message.setImageURL(downloadUri.toString());
                         message.setName(userName);
                         messagesDatabaseReference.push().setValue(message);
-                        Toast.makeText(MainActivity.this, "File is successful", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ChatActivity.this, "File is successful", Toast.LENGTH_SHORT).show();
                     } else {
                         // Handle failures
                         // ...
